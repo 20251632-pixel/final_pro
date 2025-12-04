@@ -1,0 +1,337 @@
+# --------------------------------------------------------------
+#  🎓 박월천 진로 상담 매칭 프로그램 (Colab 실행용)
+#  초보자도 이해할 수 있도록 매우 상세한 주석을 포함함
+# --------------------------------------------------------------
+
+# 모듈 import: 프로그램에서 추가 기능을 가져오는 과정
+import datetime  # 현재 날짜/시간을 가져오거나 저장할 때 사용
+import random    # Zoom 미팅 ID를 랜덤으로 생성하기 위해 사용
+
+
+# --------------------------------------------------------------
+# 1) 상담 분야 및 세부 주제를 저장하는 자료 구조 (딕셔너리 + 리스트)
+# --------------------------------------------------------------
+# fields 딕셔너리는 "분야 이름"을 key로 삼고,
+# 각 분야별 세부 상담 항목 리스트를 value로 가지고 있음.
+# 세부 항목은 다시 딕셔너리로 구성되어 있음.
+
+fields = {
+    "품질경영": [
+        {"id": 1, "name": "품질보증", "desc": "공정·제품이 기준을 잘 지키는지 관리함"},
+        {"id": 2, "name": "품질관리", "desc": "검사·측정 데이터를 분석하여 문제점 확인"},
+        {"id": 3, "name": "고객 클레임 분석", "desc": "VOC 데이터를 분석하여 불만 원인 파악"},
+    ],
+    "경영과학": [
+        {"id": 1, "name": "시뮬레이션 모델링", "desc": "공정/재고/대기열 등을 모의실험함"},
+        {"id": 2, "name": "물류·SCM 분석", "desc": "수요예측·배차 최적화 등 물류 효율 개선"},
+        {"id": 3, "name": "생산계획/스케줄링", "desc": "언제 무엇을 생산할지 계획하는 업무"},
+    ],
+    "데이터사이언스": [
+        {"id": 1, "name": "데이터 분석/시각화", "desc": "파이썬·Power BI로 데이터 분석"},
+        {"id": 2, "name": "머신러닝 모델링", "desc": "회귀·분류 등 예측 모델 만들기"},
+        {"id": 3, "name": "통계 분석", "desc": "가설검정·회귀 등 통계 기반 문제 해결"},
+    ],
+}
+
+
+# --------------------------------------------------------------
+# 2) 상담 가능한 교수(상담사) 정보
+# --------------------------------------------------------------
+# professors 딕셔너리는 교수 이름을 key로 두고
+# 전문분야, 연구실, 이메일 등을 value로 저장함.
+
+professors = {
+    "김품질": {
+        "field": "품질경영",
+        "specialty": "품질보증·고객만족·품질시스템 구축",
+        "email": "kimq@example.com",
+        "office": "공대1 305호",
+        "intro": "제조업 품질팀 실무 경험이 풍부한 교수님",
+    },
+    "이과학": {
+        "field": "경영과학",
+        "specialty": "시뮬레이션·최적화·생산/물류 시스템",
+        "email": "leeor@example.com",
+        "office": "공대2 210호",
+        "intro": "경영과학 기반 문제 해결 전문가",
+    },
+    "박데이터": {
+        "field": "데이터사이언스",
+        "specialty": "파이썬 분석·머신러닝·통계 모델링",
+        "email": "parkds@example.com",
+        "office": "융합관 501호",
+        "intro": "데이터 기반 의사결정 전문가 교수님",
+    },
+}
+
+# 분야별로 연결 가능한 교수 목록
+field_to_professors = {
+    "품질경영": ["김품질"],
+    "경영과학": ["이과학"],
+    "데이터사이언스": ["박데이터"],
+}
+
+
+# --------------------------------------------------------------
+# 3) 상담 객체(Class) 정의 - OOP 사용
+# --------------------------------------------------------------
+# 클래스는 "상담 정보"를 하나의 묶음(객체)으로 만들어 저장하기 위한 설계도 같은 역할을 함.
+
+class Consultation:
+    """하나의 상담 예약 정보를 저장하는 클래스"""
+
+    def __init__(self, student_name, field, subtopic, mode, date_str, time_str, professor, zoom_link=None):
+        # self.xxx 는 객체 내부에 변수를 저장하는 방식
+        self.student_name = student_name
+        self.field = field
+        self.subtopic = subtopic
+        self.mode = mode
+        self.date_str = date_str
+        self.time_str = time_str
+        self.professor = professor
+        self.zoom_link = zoom_link
+        self.created_at = datetime.datetime.now()  # 상담 예약된 시간 자동 저장
+
+    def summary(self):
+        """상담 내용을 보기 좋게 한 줄로 정리해서 반환하는 함수"""
+        text = f"[{self.field} - {self.subtopic['name']}] {self.date_str} {self.time_str}, {self.mode}, 상담사: {self.professor}"
+
+        # 온라인 상담일 때만 Zoom 링크 추가
+        if self.mode == "온라인(ZOOM)" and self.zoom_link:
+            text += f" (Zoom: {self.zoom_link})"
+
+        return text
+
+
+# 상담 데이터를 누적 저장할 리스트
+consultation_history = []
+
+
+# --------------------------------------------------------------
+# 4) 프로그램 기능 함수들 정의
+# --------------------------------------------------------------
+
+def generate_zoom_link():
+    """랜덤 숫자를 활용해 Zoom 회의 링크처럼 보이는 문자열을 생성"""
+    meeting_id = random.randint(10**9, 10**10 - 1)
+    return f"https://zoom.us/j/{meeting_id}"
+
+
+def print_line():
+    """화면 구분선 출력"""
+    print("-" * 60)
+
+
+def show_professor_info():
+    """전체 교수 정보 출력"""
+    print_line()
+    print("📘 상담 가능한 교수 목록")
+    print_line()
+
+    for name, info in professors.items():
+        print(f"이름: {name}")
+        print(f"전문 분야: {info['field']}")
+        print(f"특기: {info['specialty']}")
+        print(f"이메일: {info['email']}")
+        print(f"연구실: {info['office']}")
+        print(f"소개: {info['intro']}")
+        print_line()
+
+
+def select_field():
+    """상담 받을 분야 선택"""
+    print_line()
+    print("👉 상담 받고 싶은 분야를 선택하세요.")
+    print("1) 품질경영\n2) 경영과학\n3) 데이터사이언스")
+
+    choice = input("번호 입력: ")
+
+    if choice == "1":
+        return "품질경영"
+    elif choice == "2":
+        return "경영과학"
+    elif choice == "3":
+        return "데이터사이언스"
+    else:
+        print("⚠️ 잘못된 입력입니다. 다시 입력하세요.")
+        return select_field()  # 재귀 호출로 다시 선택
+
+
+def select_subtopic(field_name):
+    """세부 상담 주제 선택"""
+    print_line()
+    print(f"📂 [{field_name}] 세부 상담 주제를 선택하세요!")
+
+    # 분야의 세부 항목 출력
+    for item in fields[field_name]:
+        print(f"{item['id']}) {item['name']} - {item['desc']}")
+
+    choice = input("번호 입력: ")
+
+    # 유효한 번호인지 확인
+    for item in fields[field_name]:
+        if str(item["id"]) == choice:
+            return item
+
+    print("⚠️ 존재하지 않는 번호입니다. 다시 입력하세요.")
+    return select_subtopic(field_name)
+
+
+def select_mode():
+    """상담 방식 선택"""
+    print_line()
+    print("상담 방식을 선택하세요!")
+    print("1) 온라인(ZOOM)")
+    print("2) 오프라인(대면)")
+
+    choice = input("번호 입력: ")
+
+    if choice == "1":
+        return "온라인(ZOOM)"
+    elif choice == "2":
+        return "오프라인(대면)"
+    else:
+        print("⚠️ 잘못된 입력입니다.")
+        return select_mode()
+
+
+def input_date_time():
+    """상담 날짜와 시간 입력"""
+    print_line()
+    print("📅 상담 날짜와 시간을 입력하세요.")
+    date_str = input("날짜 (예: 2025-12-01): ")
+    time_str = input("시간 (예: 14:00): ")
+    return date_str, time_str
+
+
+def select_professor(field_name):
+    """해당 분야의 교수 선택"""
+    print_line()
+    print(f"📘 [{field_name}] 상담 가능한 교수")
+
+    candidates = field_to_professors.get(field_name, [])
+
+    for idx, name in enumerate(candidates, start=1):
+        info = professors[name]
+        print(f"{idx}) {name} - {info['specialty']} ({info['email']})")
+
+    choice = input("번호 선택: ")
+
+    try:
+        idx = int(choice) - 1
+        return candidates[idx]
+    except:
+        print("⚠️ 잘못 선택해서 기본 교수로 지정됩니다.")
+        return candidates[0]
+
+
+def book_consultation():
+    """실제로 상담을 예약하는 전체 과정"""
+    print_line()
+    print("📌 진로 상담 예약을 시작합니다!")
+
+    # 이름 입력 (기본값 박월천)
+    name = input("이름 입력 (Enter 시 '박월천'): ")
+    if name.strip() == "":
+        name = "박월천"
+
+    # 단계별 입력
+    field_name = select_field()
+    subtopic = select_subtopic(field_name)
+    mode = select_mode()
+    date_str, time_str = input_date_time()
+    professor = select_professor(field_name)
+
+    # 온라인이면 Zoom 생성
+    zoom_link = generate_zoom_link() if mode == "온라인(ZOOM)" else None
+
+    # 상담 객체 생성 후 리스트에 저장
+    c = Consultation(name, field_name, subtopic, mode, date_str, time_str, professor, zoom_link)
+    consultation_history.append(c)
+
+    print_line()
+    print("✅ 상담 예약 완료!")
+    print(c.summary())
+    print_line()
+
+
+def show_history_and_stats():
+    """상담 기록과 통계(기대효과) 보기"""
+    print_line()
+    print("📊 상담 기록 및 지표")
+
+    if not consultation_history:
+        print("아직 상담 기록이 없습니다.")
+        return
+
+    # 상담 목록 출력
+    for idx, c in enumerate(consultation_history, start=1):
+        print(f"{idx}. {c.summary()}")
+
+    print_line()
+    print("📈 간단 통계")
+
+    field_counts = {}
+    online = offline = 0
+
+    for c in consultation_history:
+        # 분야별 횟수 저장 (딕셔너리 활용)
+        field_counts[c.field] = field_counts.get(c.field, 0) + 1
+        if c.mode == "온라인(ZOOM)":
+            online += 1
+        else:
+            offline += 1
+
+    total = len(consultation_history)
+
+    # 분야별 통계 출력
+    for field, count in field_counts.items():
+        print(f"- {field}: {count}회")
+
+    # 상담 방식 통계
+    print(f"- 온라인 상담: {online}회")
+    print(f"- 오프라인 상담: {offline}회")
+
+    print_line()
+    print("📌 기대효과")
+    print("✔ 여러 상담을 하면서 학생은 직무 이해도가 높아짐")
+    print("✔ 불확실성이 줄고 ‘다음 단계’가 명확해짐")
+    print("✔ 온라인 상담 선택 비율이 높을수록 접근성이 좋아짐")
+
+
+# --------------------------------------------------------------
+# 5) 메인 메뉴 (반복문)
+# --------------------------------------------------------------
+
+def main_menu():
+    """사용자가 실행하는 메인 메뉴"""
+
+    while True:
+        print_line()
+        print("🎓 월천이 진로 상담 매칭 프로그램")
+        print("1) 상담 예약하기")
+        print("2) 교수 정보 보기")
+        print("3) 상담 기록/지표 보기")
+        print("4) 종료")
+        print_line()
+
+        choice = input("메뉴 선택: ")
+
+        if choice == "1":
+            book_consultation()
+        elif choice == "2":
+            show_professor_info()
+        elif choice == "3":
+            show_history_and_stats()
+        elif choice == "4":
+            print("프로그램을 종료합니다. 이용해주셔서 감사합니다!")
+            break
+        else:
+            print("⚠️ 올바른 번호를 입력해주세요.")
+
+
+# --------------------------------------------------------------
+# 프로그램 시작
+# --------------------------------------------------------------
+if __name__ == "__main__":
+    main_menu()
