@@ -1,0 +1,484 @@
+# -----------------------------------------
+# 모듈 import
+# -----------------------------------------
+
+import datetime  # 날짜와 시간을 다루는 기능을 제공하는 표준 모듈
+import random    # 랜덤 숫자를 만들기 위한 표준 모듈 (Zoom 회의 ID 생성용)
+
+
+# -----------------------------------------
+# 상담 분야(필드)와 세부 항목 정의
+# -----------------------------------------
+# fields: 분야 이름을 key로 하고, 각 분야의 세부 상담 주제를 리스트로 저장함.
+# 리스트 안에는 'id, name, desc'가 들어 있는 딕셔너리들이 존재함.
+
+fields = {
+    "스마트팩토리/제조 데이터": [
+        {"id": 1, "name": "스마트팩토리 진로 상담", "desc": "스마트팩토리와 제조 직무 로드맵 상담"},
+        {"id": 2, "name": "제조 데이터 분석", "desc": "공정 데이터 분석 기반 문제 해결 상담"},
+        {"id": 3, "name": "설비·품질 연계 고민", "desc": "설비관리, 품질, 공정 개선 연결 상담"},
+    ],
+
+    "경영과학": [
+        {"id": 1, "name": "최적화/의사결정 모델", "desc": "수리적 최적화 기반 진로 상담"},
+        {"id": 2, "name": "SCM/물류 분석", "desc": "공급망, 물류 전략 관련 상담"},
+        {"id": 3, "name": "수학·코딩 기반 진로", "desc": "수학/프로그래밍 역량과 직무 연결"},
+    ],
+
+    "데이터사이언스": [
+        {"id": 1, "name": "데이터 분석/시각화", "desc": "파이썬·BI 도구 활용 데이터 분석"},
+        {"id": 2, "name": "머신러닝/모델링", "desc": "머신러닝 기초 및 프로젝트 주제 상담"},
+        {"id": 3, "name": "데이터 기반 진로 설계", "desc": "데이터 분야 취업 로드맵 상담"},
+    ],
+
+    "인간공학": [
+        {"id": 1, "name": "작업 설계/측정", "desc": "작업현장 개선 및 작업연구 상담"},
+        {"id": 2, "name": "감성공학/UX", "desc": "사용자 중심 설계 관련 상담"},
+        {"id": 3, "name": "제품 설계", "desc": "인체공학적 제품 설계 및 측정 상담"},
+    ],
+
+    "생산시스템": [
+        {"id": 1, "name": "생산운영관리", "desc": "생산관리 직무 이해 상담"},
+        {"id": 2, "name": "공정 개선", "desc": "생산성 향상 및 공정 설계 상담"},
+        {"id": 3, "name": "시뮬레이션", "desc": "제조 시스템 시뮬레이션 응용 상담"},
+    ],
+
+    "기술경영": [
+        {"id": 1, "name": "혁신 전략", "desc": "기술혁신/전략 수립 관련 상담"},
+        {"id": 2, "name": "사업화·창업", "desc": "아이디어 상용화 및 창업 고민 상담"},
+        {"id": 3, "name": "데이터 기반 마케팅", "desc": "데이터 활용 마케팅 전략 상담"},
+    ],
+
+    "통계분석": [
+        {"id": 1, "name": "품질 데이터 분석", "desc": "공업통계 기반 품질 문제 분석 상담"},
+        {"id": 2, "name": "시계열/수요예측", "desc": "예측모델 및 프로젝트 상담"},
+        {"id": 3, "name": "통계 의사결정", "desc": "통계 기반 문제 해결 상담"},
+    ],
+}
+
+
+# -----------------------------------------
+# 교수 정보 정의 (전문 분야·이메일·가능 요일)
+# -----------------------------------------
+# 교수 이름을 key로 저장하고, 각 교수의 정보는 딕셔너리 형태로 저장함.
+
+professors = {
+    "백수정": {
+        "field": "스마트팩토리/제조 데이터",
+        "specialty": "스마트팩토리, 제조 데이터 분석",
+        "email": "baek@univ.ac.kr",
+        "office": "N4동 211호",
+        "intro": "스마트 제조 혁신 및 품질 데이터 기반 문제 해결 연구",
+    },
+    "민병찬": {
+        "field": "인간공학",
+        "specialty": "작업 설계, 감성공학",
+        "email": "min@univ.ac.kr",
+        "office": "N4동 214호",
+        "intro": "사용자 중심 설계를 통해 산업 안전 및 생산성 향상 연구",
+    },
+    "배성민": {
+        "field": "데이터사이언스",
+        "specialty": "Data Mining, CRM",
+        "email": "bae@univ.ac.kr",
+        "office": "N4동 210호",
+        "intro": "데이터 기반 의사결정을 위한 지능형 분석 연구",
+    },
+    "류태범": {
+        "field": "인간공학/제품설계",
+        "specialty": "Biomechanics, Product Design",
+        "email": "ryu@univ.ac.kr",
+        "office": "N4동 208호",
+        "intro": "사람 중심의 제품 설계 및 측정 연구",
+    },
+    "신문수": {
+        "field": "생산시스템",
+        "specialty": "생산운영관리, 시뮬레이션",
+        "email": "shin@univ.ac.kr",
+        "office": "N4동 209호",
+        "intro": "생산 효율 개선 및 스마트제조 운영 연구",
+    },
+    "김기태": {
+        "field": "경영과학",
+        "specialty": "Optimization, SCM",
+        "email": "kimkt@univ.ac.kr",
+        "office": "N4동 207호",
+        "intro": "최적화 기반 공급망 분석 및 운영 전략 연구",
+    },
+    "김태구": {
+        "field": "통계분석",
+        "specialty": "Applied Statistics, Forecasting",
+        "email": "ktg@univ.ac.kr",
+        "office": "N4동 206호",
+        "intro": "통계 기반 수요예측 및 투자 분석 연구",
+    },
+    "김재성": {
+        "field": "스마트팩토리/시뮬레이션",
+        "specialty": "Modeling & Simulation",
+        "email": "jaeseong@univ.ac.kr",
+        "office": "N4동 217호",
+        "intro": "디지털 제조 시스템 및 공정 모델링 연구",
+    },
+    "곽기호": {
+        "field": "기술경영",
+        "specialty": "Innovation Strategy, Tech-Business",
+        "email": "kwak@univ.ac.kr",
+        "office": "N4동 212호",
+        "intro": "산업 혁신과 기술 상용화 전략 연구",
+    },
+    "염재선": {
+        "field": "데이터사이언스",
+        "specialty": "Data Mining, Network Science",
+        "email": "yeom@univ.ac.kr",
+        "office": "N4동 216호",
+        "intro": "복잡 네트워크 분석과 데이터 기반 예측 연구",
+    },
+}
+
+
+# -----------------------------------------
+# 분야별 → 교수 매칭용 딕셔너리
+# -----------------------------------------
+
+field_to_professors = {
+    "스마트팩토리/제조 데이터": ["백수정", "김재성"],
+    "경영과학": ["김기태"],
+    "데이터사이언스": ["배성민", "염재선"],
+    "인간공학": ["민병찬", "류태범"],
+    "생산시스템": ["신문수"],
+    "기술경영": ["곽기호"],
+    "통계분석": ["김태구"],
+}
+
+
+# -----------------------------------------
+# 교수별 상담 가능 요일 정의
+# -----------------------------------------
+
+professor_available_days = {
+    "백수정": ["월", "화", "수", "목", "금"],
+    "민병찬": ["월", "수", "목", "금", "토"],
+    "배성민": ["화", "수", "목", "금", "토"],
+    "류태범": ["월", "화", "수", "금", "토"],
+    "신문수": ["월", "화", "수", "목", "금"],
+    "김기태": ["월", "수", "목", "금", "일"],
+    "김태구": ["화", "수", "목", "금", "토"],
+    "김재성": ["월", "화", "수", "목", "금"],
+    "곽기호": ["월", "화", "수", "목", "일"],
+    "염재선": ["화", "수", "목", "금", "토"],
+}
+
+
+# -----------------------------------------
+# 클래스 정의: 상담 예약 객체
+# -----------------------------------------
+
+class Consultation:
+    # 상담 예약 데이터를 담는 클래스
+    def __init__(self, student_name, field, subtopic, mode, date_str, time_str, professor, zoom_link=None):
+
+        # 각각의 속성을 객체 내부에 저장
+        self.student_name = student_name
+        self.field = field
+        self.subtopic = subtopic
+        self.mode = mode
+        self.date_str = date_str
+        self.time_str = time_str
+        self.professor = professor
+        self.zoom_link = zoom_link
+        self.created_at = datetime.datetime.now()  # 예약된 시점을 자동 저장
+
+    def summary(self):
+        # 상담 내용을 한 줄로 요약해서 문자열로 반환하는 메서드
+        base = f"[{self.field} - {self.subtopic['name']}] {self.date_str} {self.time_str}, {self.mode}, 상담사: {self.professor}"
+
+        # 온라인일 경우에만 Zoom 링크 추가
+        if self.mode == "온라인(ZOOM)" and self.zoom_link:
+            base += f" (Zoom 링크: {self.zoom_link})"
+
+        return base
+
+
+# 상담 예약 내역들을 저장하는 리스트
+consultation_history = []
+
+
+# -----------------------------------------
+# 유틸 함수 모음
+# -----------------------------------------
+
+def print_line():
+    print("-" * 60)  # 단순히 구분선을 출력하는 함수
+
+def generate_zoom_link():
+    # Zoom 미팅 ID처럼 생긴 10자리 숫자 생성
+    meeting_id = random.randint(10**9, 10**10 - 1)
+    return f"https://zoom.us/j/{meeting_id}"
+
+def get_weekday_korean(date_str):
+    # 입력한 날짜 문자열을 실제 날짜로 변환
+    try:
+        dt = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        # 형식 오류일 경우 None 반환
+        return None
+
+    # 요일을 숫자로 반환 (0=월, 1=화... 6=일)
+    weekday_names = ["월", "화", "수", "목", "금", "토", "일"]
+    return weekday_names[dt.weekday()]  # 숫자에 해당하는 요일 문자 반환
+
+
+# -----------------------------------------
+# 교수 정보 출력 기능
+# -----------------------------------------
+
+def show_professor_info():
+    print_line()
+    print("📘 상담 가능한 교수(상담사) 정보")
+    print_line()
+
+    # 모든 교수의 정보를 한 명씩 출력
+    for name, info in professors.items():
+        print(f"이름: {name}")
+        print(f"전문 분야: {info['field']} ({info['specialty']})")
+        print(f"이메일: {info['email']}")
+        print(f"연구실: {info['office']}")
+        print(f"상담 가능 요일: {', '.join(professor_available_days[name])}")
+        print(f"소개: {info['intro']}")
+        print_line()
+
+
+# -----------------------------------------
+# 사용자 입력으로 상담 분야 선택
+# -----------------------------------------
+
+def select_field():
+    print_line()
+    print("상담 받을 분야를 선택하세요.")
+
+    # fields 딕셔너리의 key 목록을 리스트로 변환
+    fields_list = list(fields.keys())
+
+    # 숫자 + 분야명을 출력
+    for i, f in enumerate(fields_list, start=1):
+        print(f"{i}) {f}")
+
+    num = input("번호 입력: ")
+
+    # 입력이 숫자이고, 해당 범위에 있다면
+    if num.isdigit() and 1 <= int(num) <= len(fields_list):
+        return fields_list[int(num) - 1]
+
+    # 잘못 입력하면 다시 호출
+    return select_field()
+
+
+# -----------------------------------------
+# 세부 상담 주제 선택
+# -----------------------------------------
+
+def select_subtopic(field_name):
+    print_line()
+    print(f"📂 [{field_name}] 세부 주제 선택")
+
+    # 해당 분야의 세부 주제를 출력
+    for item in fields[field_name]:
+        print(f"{item['id']}) {item['name']} - {item['desc']}")
+
+    num = input("번호 입력: ")
+
+    # 리스트에서 선택한 id의 항목 찾기
+    for item in fields[field_name]:
+        if str(item["id"]) == num:
+            return item
+
+    # 잘못 입력 시 재실행
+    return select_subtopic(field_name)
+
+
+# -----------------------------------------
+# 교수 선택 기능
+# -----------------------------------------
+
+def select_professor(field_name):
+    print_line()
+    print(f"📘 [{field_name}] 상담 가능 교수")
+
+    # 이 분야를 담당하는 교수 목록
+    prof_list = field_to_professors[field_name]
+
+    # 번호와 교수 이름 출력
+    for i, p in enumerate(prof_list, start=1):
+        print(f"{i}) {p} - 가능 요일: {', '.join(professor_available_days[p])}")
+
+    num = input("번호 선택: ")
+
+    if num.isdigit() and 1 <= int(num) <= len(prof_list):
+        return prof_list[int(num) - 1]
+
+    # 잘못 선택하면 첫 번째 교수로 자동 선택
+    return prof_list[0]
+
+
+# -----------------------------------------
+# 상담 모드 선택: 온라인/오프라인
+# -----------------------------------------
+
+def select_mode():
+    print_line()
+    print("상담 방식 선택")
+    print("1) 온라인(ZOOM)")
+    print("2) 오프라인(대면)")
+
+    ch = input("번호 입력: ")
+
+    if ch == "1":
+        return "온라인(ZOOM)"
+    elif ch == "2":
+        return "오프라인(대면)"
+
+    return select_mode()
+
+
+# -----------------------------------------
+# 날짜/시간 입력 + 유효성 검사
+# -----------------------------------------
+
+def input_date_time(professor):
+    print_line()
+    print(f"🗓 상담 가능 요일: {', '.join(professor_available_days[professor])}")
+
+    while True:
+        # 날짜 입력 받기
+        date_str = input("날짜 입력 (예: 2025-12-01): ")
+
+        # 입력된 날짜가 요일로 환산 가능한지 체크
+        weekday = get_weekday_korean(date_str)
+
+        if weekday is None:
+            print("❗ 올바른 날짜 형식이 아닙니다.")
+            continue
+
+        # 해당 요일이 교수 스케줄에 있는지 체크
+        if weekday not in professor_available_days[professor]:
+            print(f"❗ {professor} 교수님은 {weekday}요일에는 상담 불가")
+            continue
+
+        # 시간 입력
+        time_str = input("시간 입력 (09:00~18:00): ")
+
+        # 시간 형식 검사
+        try:
+            t = datetime.datetime.strptime(time_str, "%H:%M")
+        except:
+            print("❗ 올바른 시간 형식이 아닙니다.")
+            continue
+
+        # 상담 가능 시간인지 검사
+        if not(9 <= t.hour <= 18):
+            print("❗ 상담 가능 시간은 09:00~18:00입니다.")
+            continue
+
+        return date_str, time_str
+
+
+# -----------------------------------------
+# 상담 예약 기능
+# -----------------------------------------
+
+def book_consultation():
+    print_line()
+    print("📌 진로 상담 예약 진행")
+
+    # 이름 입력. 미입력 시 기본값 '박월천'
+    name = input("이름 입력 (기본: 박월천): ").strip() or "박월천"
+
+    # 상담 정보 단계별 입력
+    field_name = select_field()
+    subtopic = select_subtopic(field_name)
+    professor = select_professor(field_name)
+    mode = select_mode()
+    date_str, time_str = input_date_time(professor)
+
+    # 온라인 상담일 경우 Zoom 링크 생성
+    zoom_link = generate_zoom_link() if mode == "온라인(ZOOM)" else None
+
+    # 상담 객체 생성
+    consultation = Consultation(name, field_name, subtopic, mode, date_str, time_str, professor, zoom_link)
+
+    # 상담 기록에 저장
+    consultation_history.append(consultation)
+
+    print_line()
+    print("🎉 상담 예약 완료!")
+    print(consultation.summary())
+    print_line()
+
+    # -----------------------------------------
+    # ✉️ 자동 이메일 생성 (교수님에게 보내는 용도)
+    # -----------------------------------------
+
+    print("✉️ 교수님께 보내면 되는 메일 예시")
+    print_line()
+
+    weekday = get_weekday_korean(date_str)  # 날짜 문자열 → 요일로 변환
+    prof_email = professors[professor]["email"]
+
+    print(f"[메일 제목]")
+    print(f"[진로 상담 요청] {date_str}({weekday}) {time_str} / {field_name} / {name}")
+    print()
+    print("[메일 내용]")
+    print(f"{professor} 교수님, 안녕하세요.")
+    print(f"산업경영공학과 {name} 학생입니다.")
+    print("진로 상담 관련하여 아래와 같이 상담 가능 여부 문의드립니다.")
+    print()
+    print(f"- 분야: {field_name}")
+    print(f"- 주제: {subtopic['name']}")
+    print(f"- 방식: {mode}")
+    print(f"- 일시: {date_str}({weekday}) {time_str}")
+    if zoom_link:
+        print(f"- Zoom 링크: {zoom_link}")
+    print()
+    print("가능하신 경우 회신 부탁드립니다. 감사합니다 :)")
+    print()
+    print(f"{name} 드림")
+    print_line()
+    print(f"📧 교수님 이메일: {prof_email}")
+    print_line()
+
+    print("프로그램을 종료합니다. 좋은 하루 되세요! 😊")
+
+
+# -----------------------------------------
+# 메인 메뉴 (반복 실행)
+# -----------------------------------------
+
+def main_menu():
+    while True:  # 사용자가 종료할 때까지 반복되는 루프
+        print_line()
+        print("🎓 월천이 진로 상담 매칭 프로그램")
+        print("1) 상담 예약하기")
+        print("2) 교수/상담사 정보 보기")
+        print("3) 종료")
+        print_line()
+
+        ch = input("번호 입력: ")
+
+        if ch == "1":
+            book_consultation()
+            break  # 상담 예약 실행 후 프로그램 종료
+        elif ch == "2":
+            show_professor_info()
+        elif ch == "3":
+            print("프로그램 종료 😊")
+            break
+        else:
+            print("❗ 다시 입력하세요.")
+
+
+# -----------------------------------------
+# 프로그램 실행 시작점
+# -----------------------------------------
+
+if __name__ == "__main__":
+    main_menu()   # 메인 메뉴 실행
